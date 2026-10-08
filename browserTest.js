@@ -2,6 +2,8 @@ import { check } from 'k6';
 import { browser } from 'k6/browser'; // this library allows UI to interact with load
 import http from 'k6/http';
 import { Trend } from 'k6/metrics'; // k6 has no native TTI web vital, so we track it as a custom Trend
+import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js"; // community HTML reporter used via k6's handleSummary hook
+import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.2/index.js";
 
 const ttiTrend = new Trend('browser_custom_tti', true); // custom TTI approximated via Navigation Timing's domInteractive
 
@@ -89,6 +91,14 @@ export async function backendStress() {
             return resp.status === 200;
         }
     })
+}
+
+// handleSummary is k6's built-in hook, called once after the run with all result data
+export function handleSummary(data) {
+    return {
+        "summary.html": htmlReport(data), // self-contained HTML report with charts, open it in a browser
+        stdout: textSummary(data, { indent: " ", enableColors: true }),
+    };
 }
 
 /*web vitals in playwright with K6 reporting
